@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unlimited ICO, CUR & ANI Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="pop-cat-closed.ico">
+    <!-- Shim to load CommonJS omggif in browser -->
+    <script>
+        var exports = {}; // Define exports so omggif attaches to it
+    </script>
+    <script src="https://unpkg.com/omggif@1.0.10/omggif.js"></script>
+    <script>
+        window.omggif = exports; // Expose to window
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='20' ry='20' stroke='%234F46E5FF' stroke-width='2' stroke-dasharray='12%2c 12' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+        .drop-zone.dragover {
+            background-color: #EEF2FF;
+            transform: scale(1.02);
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        .checkerboard {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 8px 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans selection:bg-indigo-100">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                    Converter Pro
+                </h1>
+            </div>
+            <div class="text-sm text-slate-500 font-medium">
+                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-bolt mr-1"></i>Client-Side
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-12">
+        
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                All-in-One Icon Maker
+            </h2>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                Convert Images to <b>ICO</b>, <b>CUR</b>, or animated <b>ANI</b>.
+                <br>
+                <span class="font-semibold text-indigo-600">Supports PNG, JPG, & GIF. Unlimited.</span>
+            </p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+            
+            <!-- Upload Area -->
+            <div class="p-8">
+                <div id="dropZone" class="drop-zone w-full h-48 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 relative group">
+                    <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/gif" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    
+                    <div class="text-center transition-transform duration-300 group-hover:-translate-y-2">
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl shadow-sm">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </div>
+                        <p class="text-lg font-semibold text-slate-700">Drop files here</p>
+                        <p class="text-sm text-slate-400 mt-1">PNG, JPG, GIF (Animated)</p>
+                    </div>
+                </div>
+
+                <!-- Settings Bar -->
+                <div class="mt-8 pt-6 border-t border-slate-100">
+                    
+                    <!-- Format Selection -->
+                    <div class="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                        <label class="block text-sm font-medium text-slate-700 w-32">Output Format</label>
+                        <div class="flex flex-wrap bg-slate-100 p-1 rounded-lg">
+                            <button class="format-btn px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-indigo-600" data-format="ico">
+                                <i class="fa-regular fa-image mr-1"></i> ICO
+                            </button>
+                            <button class="format-btn px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-500 hover:text-indigo-600" data-format="cur">
+                                <i class="fa-solid fa-arrow-pointer mr-1"></i> CUR
+                            </button>
+                            <button class="format-btn px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-500 hover:text-indigo-600" data-format="ani">
+                                <i class="fa-solid fa-film mr-1"></i> ANI (Animated)
+                            </button>
+                        </div>
+                        <p id="formatHint" class="text-xs text-slate-400 hidden sm:block">Standard Windows Icon format.</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Output Resolution</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="size-btn py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-colors bg-white" data-size="1024">1024px</button>
+                                <button class="size-btn py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-colors bg-white" data-size="512">512px</button>
+                                <button class="size-btn py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-colors bg-white" data-size="320">320px</button>
+                                <button class="size-btn py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-colors bg-white selected" data-size="256">256px</button>
+                                <button class="size-btn py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-colors bg-white" data-size="128">128px</button>
+                                <button class="size-btn py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-colors bg-white" data-size="64">64px</button>
+                                <button class="size-btn py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-colors bg-white" data-size="32">32px</button>
+                            </div>
+                        </div>
+                        
+                        <div id="batchActions" class="hidden flex gap-3 self-end">
+                            <button id="clearAllBtn" class="text-slate-400 hover:text-red-500 text-sm font-medium transition-colors px-3 py-2">
+                                Clear All
+                            </button>
+                            <button id="downloadAllBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md shadow-indigo-100 text-sm transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-download"></i> Download All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File List Container -->
+                <div id="resultsArea" class="hidden mt-6 space-y-4">
+                    <!-- Items injected via JS -->
+                </div>
+
+            </div>
+            
+            <div class="bg-slate-50 px-8 py-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+                <span>100% Client-Side Processing</span>
+                <span>v3.0.0 (ANI Supported)</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- State Management ---
+        const state = {
+            items: [], // { id, file, bitmap, originalName, processedBlob, isAni }
+            selectedSize: 256,
+            format: 'ico', // 'ico', 'cur', 'ani'
+            isProcessing: false
+        };
+
+        // --- DOM Elements ---
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const resultsArea = document.getElementById('resultsArea');
+        const batchActions = document.getElementById('batchActions');
+        const sizeBtns = document.querySelectorAll('.size-btn');
+        const formatBtns = document.querySelectorAll('.format-btn');
+        const formatHint = document.getElementById('formatHint');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+        // --- Event Listeners ---
+        formatBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                formatBtns.forEach(b => {
+                    b.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                    b.classList.add('text-slate-500', 'hover:text-indigo-600');
+                });
+                btn.classList.remove('text-slate-500', 'hover:text-indigo-600');
+                btn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                
+                state.format = btn.dataset.format;
+                
+                if (state.format === 'cur') formatHint.textContent = 'Static Cursor with centered hotspot.';
+                else if (state.format === 'ani') formatHint.textContent = 'Animated Cursor (Requires GIF input).';
+                else formatHint.textContent = 'Standard Windows Icon format.';
+
+                reprocessAll();
+            });
+        });
+
+        sizeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sizeBtns.forEach(b => {
+                    b.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-600', 'selected');
+                    b.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                });
+                btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                btn.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-600', 'selected');
+                state.selectedSize = parseInt(btn.dataset.size);
+                reprocessAll();
+            });
+        });
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFiles(Array.from(e.target.files));
+            fileInput.value = '';
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+            state.items = [];
+            renderList();
+            updateBatchActions();
+        });
+
+        downloadAllBtn.addEventListener('click', () => {
+            state.items.forEach((item, index) => {
+                setTimeout(() => triggerDownload(item.id), index * 200);
+            });
+        });
+
+        // --- Core Logic ---
+
+        async function handleFiles(fileList) {
+            const validFiles = fileList.filter(f => f.type.match('image.*'));
+            if (validFiles.length === 0) {
+                alert('Please upload valid image files (PNG, JPG, GIF).');
+                return;
+            }
+            for (const file of validFiles) await addItem(file);
+            updateBatchActions();
+        }
+
+        async function addItem(file) {
+            const id = 'item-' + Math.random().toString(36).substr(2, 9);
+            const originalName = file.name.split('.')[0];
+            const isGif = file.type === 'image/gif';
+
+            // Preview logic
+            const reader = new FileReader();
+            return new Promise((resolve) => {
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const newItem = {
+                            id, file, bitmap: img, originalName, processedBlob: null, isGif
+                        };
+                        state.items.push(newItem);
+                        appendItemToDOM(newItem);
+                        processItem(newItem);
+                        resolve();
+                    };
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function appendItemToDOM(item) {
+            resultsArea.classList.remove('hidden');
+            const div = document.createElement('div');
+            div.id = item.id;
+            div.className = "flex flex-col sm:flex-row gap-4 items-center bg-slate-50 p-4 rounded-xl border border-slate-200 animate-fade-in";
+            div.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-white rounded-lg border p-1 flex-shrink-0">
+                        <img src="${item.bitmap.src}" class="w-full h-full object-contain opacity-75">
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-300 text-sm"></i>
+                    <div class="w-16 h-16 bg-white rounded-lg border border-indigo-100 relative overflow-hidden flex-shrink-0">
+                         <div class="absolute inset-0 opacity-20 checkerboard"></div>
+                         <img id="preview-${item.id}" class="relative z-10 w-full h-full object-contain">
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0 text-center sm:text-left w-full">
+                    <p class="font-medium text-slate-700 truncate" title="${item.originalName}">${item.originalName}</p>
+                    <p class="text-xs text-slate-500 font-mono">
+                        <span id="meta-${item.id}">${state.selectedSize}x${state.selectedSize}</span>
+                        <span id="ext-${item.id}" class="ml-2 px-1.5 py-0.5 bg-slate-200 rounded text-slate-600 text-[10px] uppercase">${state.format}</span>
+                        ${item.isGif ? '<span class="ml-1 text-indigo-500 font-bold">GIF</span>' : ''}
+                    </p>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="removeItem('${item.id}')" class="flex-1 sm:flex-none px-3 py-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Remove"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="triggerDownload('${item.id}')" class="flex-1 sm:flex-none bg-white border border-slate-200 hover:border-indigo-500 text-slate-700 hover:text-indigo-600 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">Download</button>
+                </div>
+            `;
+            resultsArea.prepend(div);
+        }
+
+        function removeItem(id) {
+            state.items = state.items.filter(i => i.id !== id);
+            const el = document.getElementById(id);
+            if (el) el.remove();
+            updateBatchActions();
+            if (state.items.length === 0) resultsArea.classList.add('hidden');
+        }
+
+        function renderList() {
+            resultsArea.innerHTML = '';
+            if (state.items.length === 0) { resultsArea.classList.add('hidden'); return; }
+            state.items.forEach(item => appendItemToDOM(item));
+            reprocessAll();
+        }
+
+        function updateBatchActions() {
+            batchActions.classList.toggle('hidden', state.items.length <= 1);
+        }
+
+        function reprocessAll() {
+            state.items.forEach(item => {
+                processItem(item);
+                document.getElementById(`meta-${item.id}`).textContent = `${state.selectedSize}x${state.selectedSize}`;
+                document.getElementById(`ext-${item.id}`).textContent = state.format;
+            });
+        }
+
+        async function processItem(item) {
+            const previewImg = document.getElementById(`preview-${item.id}`);
+            if (!previewImg) return;
+
+            let blob = null;
+            
+            // Logic: If ANI selected AND file is GIF, generate ANI. Else standard CUR/ICO.
+            if (state.format === 'ani' && item.isGif) {
+                try {
+                    // We need ArrayBuffer for omggif
+                    const ab = await item.file.arrayBuffer();
+                    blob = await generateAniBlob(ab, state.selectedSize);
+                    // For preview of ANI, we just show the static first frame or original gif
+                    previewImg.src = item.bitmap.src; 
+                } catch (e) {
+                    console.error("ANI Generation Error:", e);
+                    // Fallback visual to indicate error, or just leave it
+                }
+            } else {
+                // Standard single frame processing
+                blob = await generateBlob(item.bitmap, state.selectedSize, state.format);
+                
+                // Update preview visual
+                const canvas = document.createElement('canvas');
+                canvas.width = state.selectedSize;
+                canvas.height = state.selectedSize;
+                const ctx = canvas.getContext('2d');
+                
+                const img = item.bitmap;
+                const size = state.selectedSize;
+                const scale = Math.min(size / img.width, size / img.height);
+                const w = img.width * scale;
+                const h = img.height * scale;
+                const x = (size - w) / 2;
+                const y = (size - h) / 2;
+                
+                ctx.clearRect(0,0,size,size);
+                ctx.drawImage(img, x, y, w, h);
+                previewImg.src = canvas.toDataURL();
+            }
+
+            item.processedBlob = blob;
+        }
+
+        function triggerDownload(id) {
+            const item = state.items.find(i => i.id === id);
+            if (!item || !item.processedBlob) return;
+
+            const url = URL.createObjectURL(item.processedBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${item.originalName}.${state.format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- ANI Generation (Complex) ---
+        async function generateAniBlob(arrayBuffer, size) {
+            if (typeof omggif === 'undefined') {
+                throw new Error("GIF Library not loaded. Please ensure ad-blockers are not blocking unpkg.com");
+            }
+
+            // 1. Parse GIF (Use lowercase omggif)
+            const reader = new omggif.GifReader(new Uint8Array(arrayBuffer));
+            const numFrames = reader.numFrames();
+            
+            // 2. Prepare Data Structures
+            const framesData = []; // Will hold { blob, delay }
+            
+            // Canvas for compositing frames
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = reader.width;
+            canvas.height = reader.height;
+
+            // Frame buffer for omggif
+            const frameInfo = new Uint8Array(reader.width * reader.height * 4);
+
+            for (let i = 0; i < numFrames; i++) {
+                // Decode frame pixels
+                reader.decodeAndBlitFrameRGBA(i, frameInfo);
+                const frameMeta = reader.frameInfo(i);
+                
+                // Put on temp canvas (same size as GIF)
+                const imgData = new ImageData(new Uint8ClampedArray(frameInfo), reader.width, reader.height);
+                ctx.putImageData(imgData, 0, 0);
+
+                // Now resize to Target Size (contain)
+                const targetCanvas = document.createElement('canvas');
+                targetCanvas.width = size;
+                targetCanvas.height = size;
+                const tCtx = targetCanvas.getContext('2d');
+                
+                const scale = Math.min(size / reader.width, size / reader.height);
+                const w = reader.width * scale;
+                const h = reader.height * scale;
+                const x = (size - w) / 2;
+                const y = (size - h) / 2;
+                
+                tCtx.drawImage(canvas, x, y, w, h);
+
+                // Convert to single-frame CUR buffer (NO header, just partial? No, ANI needs chunks)
+                // Actually ANI chunks usually contain a FULL ICO/CUR file structure per frame.
+                // We generate a full CUR file for this frame.
+                const curBlob = await generateBlobFromCanvas(targetCanvas, size, 'cur');
+                const curBuffer = await curBlob.arrayBuffer();
+                
+                // Delay in jiffies (1/60th sec). GIF delay is in 1/100th sec.
+                // conversion: jiffies = gif_delay * (60/100) = gif_delay * 0.6
+                let jiffies = Math.max(1, Math.round(frameMeta.delay * 0.6)); 
+                
+                framesData.push({
+                    data: new Uint8Array(curBuffer),
+                    rate: jiffies
+                });
+            }
+
+            // 3. Construct RIFF ANI File
+            return buildAniFile(framesData);
+        }
+
+        function buildAniFile(frames) {
+            // Calculate total size
+            // RIFF header (12) + anih (36+8) + rate (numFrames*4 + 8) + LIST (12) + fram chunks
+            
+            const numFrames = frames.length;
+            const anihSize = 36;
+            const rateSize = numFrames * 4;
+            
+            // Calculate size of FRAM list
+            let framListSize = 4; // "fram"
+            frames.forEach(f => {
+                // chunk id(4) + size(4) + data + padding(0 or 1)
+                framListSize += 8 + f.data.length + (f.data.length % 2);
+            });
+
+            const totalFileSize = 12 + (8 + anihSize) + (8 + rateSize) + (8 + framListSize);
+            const buffer = new ArrayBuffer(totalFileSize);
+            const view = new DataView(buffer);
+            const bytes = new Uint8Array(buffer);
+            let p = 0;
+
+            // Helper to write string
+            function writeString(str) {
+                for(let i=0; i<str.length; i++) bytes[p++] = str.charCodeAt(i);
+            }
+
+            // 1. RIFF Header
+            writeString("RIFF");
+            view.setUint32(p, totalFileSize - 8, true); p += 4;
+            writeString("ACON");
+
+            // 2. anih Chunk
+            writeString("anih");
+            view.setUint32(p, 36, true); p += 4; // Chunk Size
+            
+            view.setUint32(p, 36, true); p += 4; // cbSize
+            view.setUint32(p, numFrames, true); p += 4; // cFrames
+            view.setUint32(p, numFrames, true); p += 4; // cSteps
+            view.setUint32(p, 0, true); p += 4; // cx (0 = default)
+            view.setUint32(p, 0, true); p += 4; // cy
+            view.setUint32(p, 0, true); p += 4; // cBitCount
+            view.setUint32(p, 0, true); p += 4; // cPlanes
+            view.setUint32(p, 10, true); p += 4; // JifRate (default 10)
+            view.setUint32(p, 1, true); p += 4; // flags (1 = AF_ICON)
+
+            // 3. rate Chunk
+            writeString("rate");
+            view.setUint32(p, rateSize, true); p += 4;
+            frames.forEach(f => {
+                view.setUint32(p, f.rate, true); p += 4;
+            });
+
+            // 4. LIST fram Chunk
+            writeString("LIST");
+            view.setUint32(p, framListSize, true); p += 4;
+            writeString("fram");
+            
+            frames.forEach(f => {
+                writeString("icon");
+                view.setUint32(p, f.data.length, true); p += 4;
+                
+                // Write data
+                bytes.set(f.data, p);
+                p += f.data.length;
+
+                // Padding byte if odd
+                if (f.data.length % 2 !== 0) {
+                    bytes[p] = 0;
+                    p++;
+                }
+            });
+
+            return new Blob([buffer], { type: 'application/octet-stream' });
+        }
+
+        // --- Standard Blob Gen (Refactored) ---
+        async function generateBlob(image, size, format) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw logic: "Contain"
+            const scale = Math.min(size / image.width, size / image.height);
+            const w = image.width * scale;
+            const h = image.height * scale;
+            const x = (size - w) / 2;
+            const y = (size - h) / 2;
+            ctx.drawImage(image, x, y, w, h);
+
+            return generateBlobFromCanvas(canvas, size, format);
+        }
+
+        async function generateBlobFromCanvas(canvas, size, format) {
+            const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const pngBuffer = await pngBlob.arrayBuffer();
+            const pngData = new Uint8Array(pngBuffer);
+
+            const headerSize = 6;
+            const directorySize = 16;
+            const totalSize = headerSize + directorySize + pngData.length;
+            const fileBuffer = new ArrayBuffer(totalSize);
+            const view = new DataView(fileBuffer);
+
+            // Header
+            view.setUint16(0, 0, true);
+            view.setUint16(2, format === 'cur' ? 2 : 1, true); 
+            view.setUint16(4, 1, true); 
+
+            // Directory
+            const dim = size >= 256 ? 0 : size;
+            view.setUint8(6, dim);
+            view.setUint8(7, dim);
+            view.setUint8(8, 0);
+            view.setUint8(9, 0);
+
+            if (format === 'cur') {
+                const hotspot = Math.floor(size / 2);
+                view.setUint16(10, hotspot, true);
+                view.setUint16(12, hotspot, true);
+            } else {
+                view.setUint16(10, 1, true);
+                view.setUint16(12, 32, true);
+            }
+
+            view.setUint32(14, pngData.length, true);
+            view.setUint32(18, headerSize + directorySize, true);
+
+            const fileBytes = new Uint8Array(fileBuffer);
+            fileBytes.set(pngData, headerSize + directorySize);
+
+            const mime = (format === 'cur' || format === 'ani') ? 'application/octet-stream' : 'image/x-icon';
+            return new Blob([fileBuffer], { type: mime });
+        }
+
+        window.removeItem = removeItem;
+        window.triggerDownload = triggerDownload;
+    </script>
+</body>
+</html>
